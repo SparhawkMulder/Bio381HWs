@@ -1,5 +1,5 @@
 ---
-title: "index"
+title: "Bio 381 HW Webpage"
 author: "Sparhawk"
 date: "2023-01-25"
 output: html_document
@@ -9,6 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Sparhawk Mulder Homework Webpage
 
-## Week 2 Hw: This, lol
+
+
+## Week 2 Hw:
+
+This, lol.
