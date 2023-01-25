@@ -12,6 +12,5 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-## Week 2 Hw:
+## [Week 2 Hw]{Homework2.Rmd}
 
-This, lol.
