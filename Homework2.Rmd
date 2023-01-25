@@ -1,0 +1,25 @@
+---
+title: "Homework 2"
+author: "Sparhawk"
+date: "2023-01-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Wheeee look ma no hands!
+
+here's some data
+
+```{r cars}
+summary(cars)
+```
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+
