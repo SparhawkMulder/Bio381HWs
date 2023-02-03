@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Hi Greg.
+Hi George.
 
 
 ## [Week 2 Hw](Homework2.html)
