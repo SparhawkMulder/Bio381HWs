@@ -12,133 +12,149 @@ knitr::opts_chunk$set(echo = TRUE)
 # Homework 4: Atomic Elbow
 
 ## Question the First: Basic Arithmatic
-```
-x <- 1.1
-a <- 2.2
-b <- 3.3
-```
 
-a. create X^a^b
-```
-z <- x^a^b
-print(z)
-```
+    x <- 1.1
+    a <- 2.2
+    b <- 3.3
 
-b. create (X^a)^b
-```
-z <- (x^a)^b
-print(z)
-```
+a.  create X^a^b
 
-c. create 3x^3+2x^2+1
-```
-z <- 3*x^3 + 2*x^2 + 1
-print(z)
-```
+<!-- -->
+
+    z <- x^a^b
+    print(z)
+
+b.  create (X^a)^b
+
+<!-- -->
+
+    z <- (x^a)^b
+    print(z)
+
+c.  create 3x^3+2x^2+1
+
+<!-- -->
+
+    z <- 3*x^3 + 2*x^2 + 1
+    print(z)
 
 ## Question the Secondth: rep and seq
 
 use only rep and seq
 
-a. create (1,2,3,4,5,6,7,8,7,6,5,4,3,2,1)
-```
-x <- seq(8)
-y <- seq(from = 7, to = 1)
-z <- c(x,y)
-print(z)
-```
+a.  create (1,2,3,4,5,6,7,8,7,6,5,4,3,2,1)
+
+<!-- -->
+
+    x <- seq(8)
+    y <- seq(from = 7, to = 1)
+    z <- c(x,y)
+    print(z)
+
 ???
 
-b. create (1,2,2,3,3,3,4,4,4,4,5,5,5,5,5
-```
-z <- seq(5)
-t <- seq(from = 1, to = 5)
-rep(z, times = t)
-```
+b.  create (1,2,2,3,3,3,4,4,4,4,5,5,5,5,5
 
-c. create (5,4,4,3,3,3,2,2,2,2,1,1,1,1,1)
-```
-z <- seq(from = 5, to = 1)
-t <- seq(from = 1, to = 5)
-rep(z, times = t)
-```
+<!-- -->
+
+    z <- seq(5)
+    t <- seq(from = 1, to = 5)
+    rep(z, times = t)
+
+c.  create (5,4,4,3,3,3,2,2,2,2,1,1,1,1,1)
+
+<!-- -->
+
+    z <- seq(from = 5, to = 1)
+    t <- seq(from = 1, to = 5)
+    rep(z, times = t)
 
 ## Question the Thirdst: Coordinate conversions
 
 create two random uniform numbers, representing random x and y coords. Then transform them into polar coordinates using R's inverse trigonometry functions.
-```
-z <- runif(2, min = -50, max = 50)
-names(z) <- c("x val", "y val")
-print(z)
 
-polar_z <- c(sqrt(z[1]^2 + z[2]^2), atan(z[2]/z[1]))
-```
+    z <- runif(2, min = -50, max = 50)
+    names(z) <- c("x val", "y val")
+    print(z)
+
+    polar_z <- c(sqrt(z[1]^2 + z[2]^2), atan(z[2]/z[1]))
+
 polar coordinates in the form (r, theta)
 
 ## Question the Fourthnd: Noah's Ark
 
 Create queue `queue <- c("sheep", "fox", "owl", "ant")`
 
-a. serpent gets in line
-```
-queue <- append(queue, "serpent")
-```
+a.  serpent gets in line
 
-b. sheep enters ark
-```
-queue <- queue[-1]
-```
+<!-- -->
 
-c. donkey arrives at front of line
-```
-queue <- append(queue, "donkey", after = 0)
-```
+    queue <- append(queue, "serpent")
 
-d. serpent leaves queue
-```
-names(queue) <- queue
-print(queue)
-queue <- queue[names(queue) != "serpent"]
-```
+b.  sheep enters ark
+
+<!-- -->
+
+    queue <- queue[-1]
+
+c.  donkey arrives at front of line
+
+<!-- -->
+
+    queue <- append(queue, "donkey", after = 0)
+
+d.  serpent leaves queue
+
+<!-- -->
+
+    names(queue) <- queue
+    print(queue)
+    queue <- queue[names(queue) != "serpent"]
+
 this is a more elegant, name-searcher solution. We take the subset with all names NOT "serpent". I looked it up, no credit to me.
 
-e. owl leaves
-```
-names(queue) <- queue
-print(queue)
-queue <- queue[names(queue) != "owl"]
-```
+e.  owl leaves
+
+<!-- -->
+
+    names(queue) <- queue
+    print(queue)
+    queue <- queue[names(queue) != "owl"]
+
 same as serpent.
 
-f. aphid arrives and cuts in front of ant
-```
-position <- which(queue == "ant")
-queue[3] <- "aphid"
-queue <- append(queue, "ant", after = position)
-```
+f.  aphid arrives and cuts in front of ant
+
+<!-- -->
+
+    position <- which(queue == "ant")
+    queue[3] <- "aphid"
+    queue <- append(queue, "ant", after = position)
+
 uses the which function, which searches for the position of an element in a list (can return a vector of answers, careful!)
 
-g. where is the aphid in line?
-```
-position <- which(queue == "aphid")
-print(position)
-```
+g.  where is the aphid in line?
+
+<!-- -->
+
+    position <- which(queue == "aphid")
+    print(position)
 
 ## Final Question
 
 Create a vector of all of the integers from 1 to 100 that are not divisible by 2, 3, or 7.
-```
-full <- seq(from = 1, to = 100)
-div2 <- full%%2
-odds <- rep(full, times = div2) #replicates only elements of full not divisible by 2
 
-div3 <- odds%%3
-#div3b <- replace(div3, 2, 1)
-nothrees <- rep(odds, times = div3) 
-nothrees <- unique(nothrees)
+    full <- seq(from = 1, to = 100)
+    div2 <- full%%2
+    odds <- rep(full, times = div2) #replicates only elements of full not divisible by 2
 
-div7 <- nothrees%%7
-final <- rep(nothrees, times = div7)
-unique(final)
-```
+    div3 <- odds%%3
+    #div3b <- replace(div3, 2, 1)
+    nothrees <- rep(odds, times = div3) 
+    nothrees <- unique(nothrees)
+
+    div7 <- nothrees%%7
+    final <- rep(nothrees, times = div7)
+    unique(final)
+
 This makes a list of the remainder of each element, then creates a replication where each element is replicated a number of times equal to its remainder (0 times, if it's divisible!). Then the `unique` function cleans up the extras. Then simply repeat the process for each non-factor (2, 3, 7, or any other).
