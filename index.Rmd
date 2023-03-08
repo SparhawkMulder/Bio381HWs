@@ -21,3 +21,5 @@ Hi George.
 ## [Week 5 Hw](Homework5.html)
 
 ## [Week 6 Hw](Homework6.html)
+
+## [Week 7 Hw](Homework7.html)

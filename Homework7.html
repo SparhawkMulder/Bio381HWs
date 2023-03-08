@@ -11,9 +11,9 @@
 
 <meta name="author" content="Sparhawk" />
 
-<meta name="date" content="2023-01-25" />
+<meta name="date" content="2023-03-08" />
 
-<title>Bio 381 HW Webpage</title>
+<title>Homework7</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,31 +350,248 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Bio 381 HW Webpage</h1>
+<h1 class="title toc-ignore">Homework7</h1>
 <h4 class="author">Sparhawk</h4>
-<h4 class="date">2023-01-25</h4>
+<h4 class="date">2023-03-08</h4>
 
 </div>
 
 
-<p>Hi George.</p>
-<div id="week-2-hw" class="section level2">
-<h2><a href="Homework2.html">Week 2 Hw</a></h2>
+<div id="randomized-data" class="section level2">
+<h2>Randomized Data</h2>
+<p>Ran successfully with this code</p>
+<pre><code>z &lt;- rnorm(n=3000,mean=0.2)
+z &lt;- data.frame(1:3000,z)
+names(z) &lt;- list(&quot;ID&quot;,&quot;myVar&quot;)
+z &lt;- z[z$myVar&gt;0,]
+str(z)
+summary(z$myVar)
+
+
+# Histogram
+
+p1 &lt;- ggplot(data=z, aes(x=myVar, y=..density..)) +
+  geom_histogram(color=&quot;grey60&quot;,fill=&quot;cornsilk&quot;,size=0.2) 
+print(p1)
+
+# Modification: empirical density curve
+p1 &lt;-  p1 +  geom_density(linetype=&quot;dotted&quot;,size=0.75) # &quot;smoothes&quot; our histogram
+print(p1)
+
+
+# Maximum Likelihood for Normal dist
+
+normPars &lt;- fitdistr(z$myVar,&quot;normal&quot;) # parameters of dataset IF it&#39;s normal
+print(normPars)
+str(normPars)
+normPars$estimate[&quot;mean&quot;] # note structure of getting a named attribute
+
+
+# Plotting probability density of normal distr
+
+meanML &lt;- normPars$estimate[&quot;mean&quot;] # ML = max likelihood
+sdML &lt;- normPars$estimate[&quot;sd&quot;]
+
+xval &lt;- seq(0,max(z$myVar),len=length(z$myVar))
+
+stat &lt;- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour=&quot;red&quot;, n = length(z$myVar), args = list(mean = meanML, sd = sdML))
+p1 + stat # prints both on overlapping
+# observe that it&#39;s not a great fit
+
+
+# Plotting Exponential probability density
+# same thing we did before, but with exponential model
+
+expoPars &lt;- fitdistr(z$myVar,&quot;exponential&quot;)
+rateML &lt;- expoPars$estimate[&quot;rate&quot;]
+
+stat2 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour=&quot;blue&quot;, n = length(z$myVar), args = list(rate=rateML))
+p1 + stat + stat2
+# also doesn&#39;t look perfect
+
+
+# Uniform probability density/distribution
+
+stat3 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour=&quot;darkgreen&quot;, n = length(z$myVar), args = list(min=min(z$myVar), max=max(z$myVar)))
+# note no need for fitdistr, just use min and max
+p1 + stat + stat2 + stat3
+
+
+# Gamma probability distribution
+
+gammaPars &lt;- fitdistr(z$myVar,&quot;gamma&quot;)
+shapeML &lt;- gammaPars$estimate[&quot;shape&quot;]
+rateML &lt;- gammaPars$estimate[&quot;rate&quot;]
+
+stat4 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour=&quot;brown&quot;, n = length(z$myVar), args = list(shape=shapeML, rate=rateML))
+p1 + stat + stat2 + stat3 + stat4
+# looks pretty good
+
+
+# Beta probability distribution
+# requires a replotting to scale data between 1 and 0
+
+pSpecial &lt;- ggplot(data=z, aes(x=myVar/(max(myVar + 0.1)), y=..density..)) +
+  geom_histogram(color=&quot;grey60&quot;,fill=&quot;cornsilk&quot;,size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype=&quot;dotted&quot;)
+
+betaPars &lt;- fitdistr(x=z$myVar/max(z$myVar + 0.1),start=list(shape1=1,shape2=2),&quot;beta&quot;)
+shape1ML &lt;- betaPars$estimate[&quot;shape1&quot;]
+shape2ML &lt;- betaPars$estimate[&quot;shape2&quot;]
+
+statSpecial &lt;- stat_function(aes(x = xval, y = ..y..), fun = dbeta, colour=&quot;orchid&quot;, n = length(z$myVar), args = list(shape1=shape1ML,shape2=shape2ML))
+pSpecial + statSpecial</code></pre>
+<p>Gamma appeared to fit this dataset best, though it was similar to
+normal</p>
 </div>
-<div id="week-3-hw" class="section level2">
-<h2><a href="Homework3.html">Week 3 Hw</a></h2>
+<div id="real-data-trial" class="section level2">
+<h2>Real Data trial</h2>
+<p>Data was colelcted from Beam et al. 2020, a correspondence study of
+young workers in the Philippines. AS part of the study, photos sent in
+along with the fake resumes were rated in attractiveness from 1 (low) to
+7 (high) by 50 Filipinos (male and female). The result was averaged for
+each photo.</p>
+<pre><code>z &lt;- read.table(&quot;CleanedData.csv&quot;,header=TRUE,sep=&quot;,&quot;)
+str(z)
+summary(z)
+
+# cleaning it for our simplified purposes!
+library(dplyr)
+z &lt;- dplyr::select(z, photo, avg_rating, photo_gender)
+z &lt;- unique(z)
+z &lt;- arrange(z, photo)
+
+# Histogram
+p1 &lt;- ggplot(data=z, aes(x=avg_rating, y=..density..)) +
+  geom_histogram(color=&quot;grey60&quot;,fill=&quot;cornsilk&quot;,size=0.2) 
+print(p1)
+
+# Density curve
+p1 &lt;-  p1 +  geom_density(linetype=&quot;dotted&quot;,size=0.75)
+print(p1)
+
+
+# Normal
+normPars &lt;- fitdistr(z$avg_rating,&quot;normal&quot;)
+
+
+
+meanML &lt;- normPars$estimate[&quot;mean&quot;]
+sdML &lt;- normPars$estimate[&quot;sd&quot;]
+
+xval &lt;- seq(0,max(z$avg_rating),len=length(z$avg_rating))
+
+stat &lt;- stat_function(aes(x = xval, y = ..y..), fun = dnorm, colour=&quot;red&quot;, n = length(z$avg_rating), args = list(mean = meanML, sd = sdML))
+
+p1 + stat
+
+# Exponential
+expoPars &lt;- fitdistr(z$avg_rating,&quot;exponential&quot;)
+rateML &lt;- expoPars$estimate[&quot;rate&quot;]
+
+stat2 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dexp, colour=&quot;blue&quot;, n = length(z$avg_rating), args = list(rate=rateML))
+
+p1 + stat + stat2
+
+# Uniform
+stat3 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dunif, colour=&quot;darkgreen&quot;, n = length(z$avg_rating), args = list(min=min(z$avg_rating), max=max(z$avg_rating)))
+
+p1 + stat + stat2 + stat3
+
+# Gamma
+gammaPars &lt;- fitdistr(z$avg_rating,&quot;gamma&quot;)
+shapeML &lt;- gammaPars$estimate[&quot;shape&quot;]
+rateML &lt;- gammaPars$estimate[&quot;rate&quot;]
+
+stat4 &lt;- stat_function(aes(x = xval, y = ..y..), fun = dgamma, colour=&quot;brown&quot;, n = length(z$avg_rating), args = list(shape=shapeML, rate=rateML))
+
+p1 + stat + stat2 + stat3 + stat4
+
+# Beta
+
+pSpecial &lt;- ggplot(data=z, aes(x=avg_rating/(max(avg_rating + 0.1)), y=..density..)) +
+  geom_histogram(color=&quot;grey60&quot;,fill=&quot;cornsilk&quot;,size=0.2) + 
+  xlim(c(0,1)) +
+  geom_density(size=0.75,linetype=&quot;dotted&quot;)
+# maybe not a great way to set this up
+
+betaPars &lt;- fitdistr(x=z$avg_rating/max(z$avg_rating + 0.1),start=list(shape1=1,shape2=2),&quot;beta&quot;)
+shape1ML &lt;- betaPars$estimate[&quot;shape1&quot;]
+shape2ML &lt;- betaPars$estimate[&quot;shape2&quot;]
+
+statSpecial &lt;- stat_function(aes(x = xval, y = ..y..), fun = dbeta, colour=&quot;orchid&quot;, n = length(z$avg_rating), args = list(shape1=shape1ML,shape2=shape2ML))
+pSpecial + statSpecial</code></pre>
+<p>This generates an image which looks like:</p>
+<p>The gamma distribution (brown) appears to be the best fit here,
+although it’s very similar to the normal. This is a small dataset of
+only 64 values</p>
 </div>
-<div id="week-4-hw" class="section level2">
-<h2><a href="Homework4.html">Week 4 Hw</a></h2>
-</div>
-<div id="week-5-hw" class="section level2">
-<h2><a href="Homework5.html">Week 5 Hw</a></h2>
-</div>
-<div id="week-6-hw" class="section level2">
-<h2><a href="Homework6.html">Week 6 Hw</a></h2>
-</div>
-<div id="week-7-hw" class="section level2">
-<h2><a href="Homework7.html">Week 7 Hw</a></h2>
+<div id="simulating-new-data-from-our-closest-model" class="section level2">
+<h2>Simulating New Data from our closest model</h2>
+<p>We have chosen a gamma model for our simulation(s)</p>
+<pre><code># Gamma Maximum Likelihood parameters:
+shapeML
+rateML
+# found earlier
+
+# New Simulation
+Sim1 &lt;- rgamma(64, shape=shapeML, rate=rateML)
+Sim1 &lt;- data.frame(Sim1)
+Sim1 &lt;- rename(Sim1, avg_rating = Sim1)
+
+# Histogram
+pSim &lt;- ggplot(data=Sim1, aes(x=avg_rating, y=..density..)) +
+  geom_histogram(color=&quot;black&quot;,fill=&quot;turquoise&quot;,size=0.2) 
+print(pSim)
+
+pSim &lt;-  pSim +  geom_density(linetype=&quot;dotted&quot;,size=0.75) # &quot;smoothes&quot; our histogram
+print(pSim)
+
+print(p1)
+
+
+# Good job now do it again
+Sim2 &lt;- rgamma(150, shape=shapeML, rate=rateML)
+Sim2 &lt;- data.frame(Sim2)
+Sim2 &lt;- rename(Sim2, avg_rating = Sim2)
+
+
+pSim2 &lt;- ggplot(data=Sim2, aes(x=avg_rating, y=..density..)) +
+  geom_histogram(color=&quot;black&quot;,fill=&quot;turquoise&quot;,size=0.2) 
+print(pSim2)
+
+pSim2 &lt;-  pSim2 +  geom_density(linetype=&quot;dotted&quot;,size=0.75) # &quot;smoothes&quot; our histogram
+print(pSim2)
+
+
+# We must imagine Sisyphus happy
+Sim3 &lt;- rgamma(150, shape=shapeML, rate=rateML)
+Sim3 &lt;- data.frame(Sim3)
+Sim3 &lt;- rename(Sim3, avg_rating = Sim3)
+
+
+pSim3 &lt;- ggplot(data=Sim3, aes(x=avg_rating, y=..density..)) +
+  geom_histogram(color=&quot;black&quot;,fill=&quot;turquoise&quot;,size=0.2) 
+print(pSim3)
+
+pSim3 &lt;-  pSim3 +  geom_density(linetype=&quot;dotted&quot;,size=0.75) # &quot;smoothes&quot; our histogram
+print(pSim3)
+
+
+# put them all back-to-back
+print(p1)
+print(pSim)
+print(pSim2)
+print(pSim3)</code></pre>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcgAAAGACAMAAAAedALZAAAAyVBMVEUAAAAAADoAAGYAOpAAZrYzMzM6AAA6ADo6AGY6kNtNTU1NTW5NTY5NbqtNjshmAABmADpmtv9uTU1uTW5uTY5ubo5ubqtuq+SOTU2OTW6OTY6Obk2ObquOyP+QOgCQkDqQkGaQtpCQ27aQ2/+ZmZmrbk2rbm6rbo6rjk2r5OSr5P+2ZgC22/+2///Ijk3I///bkDrb/7bb/9vb///kq27k///r6+v/tmb/yI7/25D/27b/29v/5Kv/+Nz//7b//8j//9v//+T////sMLzGAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAPKUlEQVR4nO3dbXvUuBUGYBECu5mFpoEuod2SdkuhXSiQlpCENoTE//9H1ZJnRrb1Yr3ZOpKf58Ne1qxGPvaNbM9MZswapIqw3AUgaQLISgLISgLISgLISgLISuIPeRmemOcSGYBACcMBAFlsCYBMMQCBEgCZYgACJQAyxQAESgBkigEIlADIFAMQKAGQKQYgUAIgUwxAoARAphiAQAmATDEAgRIAmWIAAiUAMsUABEoAZIoBCJQAyBQDECiBJuTfjXEYwNTfPE4iyMlCpwaIrkC2qEB+k+kvf3OCNPQ3PZ4OcqrQqQGiK5AtQIYFkEoJIoAMq0C2ABkWQColiAAyrALZAmRYAKmUIALIsApkC5BhAaRSggggwyqQLUCGBZBKCSKADKtAtqYhv7/cPP0ilm6ebZ58AqQcoSjI+zevmovfCdE/vmsutqaAtK/AcYDoCmRrEvL7nz41N3/gE/HmxRfRAuRliZCCr52L/Rn5qI3xCUExQ/o+2eHxeaqeYwX+MUNeP91B9s6WDWakfQWOA0RXIFuTkHJG3jx/11w/waFVjlAUpDxH9uYmIMuDvH9zur1qxYwcj1AU5PbMyCfl9Wbz025CAtK6AscBoiuQrWlIQ5KVIALIsApkC5BhAaRSggggwyqQLUCGBZBKCSKADKtAtgAZFkAqJYgAMqwC2QJkWACplCACyLAKZAuQYQGkUoIIIMMqkC1AhgWQSgkigAyrQLYAGRZAKiWIADKsAtkCZFgAqZQgAsiwCmQLkGEBpFKCCCDDKpAtQIYFkEoJIoAMq0C2ABkWQColiAAyrALZAmRYAKmUIALIsApkC5BhAaRSggggwyqQLUCGBZBKCSKADKtAtoIh08YM6ftkh8fnqXqOFfgHM9Iz9czIZCWIADKsAtkCZFgAqZQgAsiwCmQLkGEBpFKCCCDDKpAtQIYFkEoJIoAMq0C2ABkWQColiJghdbefCoEcjAPI5SF1+yoEctAHkIDslwBIJYAMq0C2ABmxDYBUAsiwCmQLkBHbAEglgAyrQLYAGbENgFQCyLAKZAuQEdsASCWADKtAtgAZsQ2AVALIsApkC5AR2wBIJYAMq0C2ABmxDYBUAsiwCmQLkBHbAEglgAyrQLYAGbENgFQCyLAKZAuQEdtQFqS8Ie/9mwy3HQSk0wDTkPL29c3HV+KuroC8LBFS3ppX3roekAVC9m6W/eKf20Prkrev7y9rn8pY14excR8j5CxVpxo0Li63r7959kqwdkn2b0kkYkaOIBmbHBQzMsddz82Qe7JBHyYlAdlP7xz5ZyKQW6o92bAPZqQ+8vb1/KqVxKG1d/RUn9zrAsjhlNzfvr5derK/cE1Wgogj5JZw+qoVkM5JVoJIakjroIDMDqkfwLQ/u+tYQJKCZEGQTDsoIHNCsoB3djAj6UEO9hXOkcoABUDK4yMgzQPUD7l9OiCzQ2r2ldeM3L4HC8jiITEjs0MyXOy4DkAckgHScQDakAqAfoBpyN1nloAsHPJb/906QC4JudvzqSAxI7NB6q429QPgHEkYUg+gHwCQgIzbBkAqWQJyf8EDyIUg2RAgGSRm5NKQxs8R9QPg0EoU8puhAUjzAICM2QZAKlkIcvuRFiBLh+wkAbkAJJsZEjNyKUiGc2TIAOQgv807IwEJSM02AFLJkpCMATIp5OC+Y76QxidPD8owI9PGeOQzQno+2bg8yxakGjQuWWbkeD9rPks2z8gYSMzImSHVfQ5IxwFIQWqWAek4wFohxz9DELYNgBTJChlRvtwGQIrg0BpfgWxpIG+PH7xeHNLwRwGAdBxAPyPfM/bw88KQ+q/7A9JxAD0kn5WMHS0JaVgGpOMAJsiO8uBDzZBRV66lQJ4zdtgeYi0H2PgSskNGbEIZkHdnjJ3whSvLlIwvITdkVEqAvD22HVIBKbeBPOTkdEwMOfoeKiD9ByACmWtGhl/v0IdsL3O2OVzBoTVYkj7kfkZOJL4EEpBR20Ac0i3xJVCAjNsGypDtdORvBfAsd44EZGgFspV9Rmp+YQyQ/gMAMvB6pwjI7vA68a5AfAlUDq1BkkVAvj9szg8+nK/h5QdPtTOynZB3Z4dLviGAc2RoBbKlh7w9PgLk9DYQh7w7O7p68JofYGeHlL+YAsigCmRLA9l8fcwOrZ9F1gfpfcFTBKRT4ksgdWj1lQTkJVHIkG2gDtkeWvEWncs2EIfkrz1WNyODtoE45Jo+xhrE5zxZAuTd2QCyu39kF34v+3SQpp+cywfpLlkC5PCtAG63vaNr01xskkIabiaXC9LniqcEyOHnkfIey01z8/MvKSEd9jnOkY4DaGfkIL17nd+//a07tD5qY3yCc/whPZ9sXI6vXVNEqkHjYoa8frqHvDhNe470huwNMNuMdDxPljEjzxk7Od++RSdnZLu0BkiPbaAO+f7hv7tPsnjkOfJiw3OaCJIRhfTZBuKQ4mOsk9216/2bU3nVmnBGmv+6HJABA0xDbl9HdpNyBYdWkekTZQmQzTk/tPLPlm2JL4EypNs2UIdsrvjLSLtj3ZCO20Ae0iXxJQAyvgLZygMpzkHUIa0nSvKQu/fn5v08sgxI+zaMt8B7J0TG5WKHE059mBVfAnVIEdO0LAFy+S+6AjIggFzPxc720Lri15HjqPOyCMjudeTE33vEl1ASpH4byEO6JL6EgiC79OclIC/3/77Lg+zvOGULPAerArLbI8VB9osH5GW5h1YRQCollAnZ3wZAipQM2c1LQIoUDYkZeUkA0juGbTAO2utoenywAydWZtuLu9bikPJecfkgnVamW/FwN/b+Ut7c3/T4ENK+Mm2yQxKYkU4rs+/bDtL07ZVex2ohL+uBvFz1jLysCNKlPyAt+4cUpOYee4Cc2Le9AQhBqne9rB+y9/ZWNZAT/SuFZL0SADnZyRYcWgEJyNE27PswBkiffdsbgBbk+M4lvY6AtOxPgpDlzkj/sNFK/Pet55PTQRq2yKW/yzgJf4xgiRm5/9ulCmckLna89m1vAIKQ8i10QE7s294ABCF7vz7b6whIy/6kCqnrD0jL/iQKqe0PSMv+AeR4AEAC0nF1+/S+OFEzpLjgqRtSKaFOyHH/6iDVEqqEVPoD0rJ/ADkeAJCAdFydpYRqIQdfVAekZX9Sh6x3Rg5/TKF2yIoPrcMfUwDk2KEYSG0JgJzs5LAXdy1AunQybIOl//5kAkjL/iwBctcRkJb9WQDkPvVAGn7+C5AOnWwBJCDDII0lVA+p/rywyQGQzkhZIJU+JgdAOiPh0ApIQE6UAMjJTg57cdcCpEsnwzasCVL34+5rghz+qJLJoQRIcwnrgKxlRlpKWAVkNYdWSwmAnOzksBd3rWnI7v6RPDfPNklvX++9b3sDANIXkt/7s7ujK7/T8s3zd4Dcb4MjpPbrdotDynssX3POj7sp6bg6SwnrgdQ9vjikvOv5blY2zaM2xifIjH80YBT/fev55HSQvltg6uO0Kxz2rDnmXX79tAfJ75y9jcO/GdN9+9Y2I7WPZ52R31/uHXFotW1BryMZSHmObK9aX8nHHVdnKWFNkEz5llaGq9bT7VXrwBGQti3oddw+rnxvMtfryHZSXmx4cNUqt8EHcvx4Me/sWO5QvEZI5fFyIM2SgBw7UIacLgGQk50c9uKuBUiXToZt8IRkyg0oNZ0AGb88+4xUbgmr65Qf0vuOU9771vPJ6SB9t8AEaXJwgRzfP2tGyF7F8+/bGZbTDepg5A856rMEJDPf/stzGZBZISnu20VXBsjxcoWQbHAXG0CSXpkV8hKQMy/j0ApIQE4sVwop708MSNIrm4TEjJxzGYdWQAJyYrlmSDbdCZCZV+YGySY7ATLzypwgHToBMvPKADleBiQgy4Bk1h/jAWTmlXlAWjsBMvPK3CHtnQCZeWWekMaf/gBk5pV5QzJ9J0BmXpkn5CVmJNGV+ULiHEl0ZWGQ6pcol4BUQ3vfLroy016x77ruVOn0gwVGBMzIpIOGzUj1S5RLzEhA4hzpsbxGSMM3SwGZYWVxkFpHQOZYWRSkeESdloDMsDJAjpdXC9nFdmtYQJYEafkDLUAWBGnrA8jiIPV/RQBIQALSdTktpL4PIEuF7H36DMiFVjYP5LAPIEuF7P73/vdCAQlIQLouzwi57wNIQALSdRmQ42VAAhKQgIxeBuR4GZCABCQgo5cBOV4GJCABCcjoZUCOlwEJSEACMnoZkONlQKaD7O4fOVwCpH2ZIuT9m1fbO7rKJUBOLFOElPdY7t1tGZD2ZYqQ8q7nculRG7Wn903OkOAYucyQ1093fHJJPyOdE/NcIgMQKCHFjAQkgRLmO0cGllDkAARK8L9qPd1ftZ5ar1oDSyhyAAIlBL6O5FNx4nVkYAlFDkCghPne2QksocgBCJQAyBQDECgBkCkGIFACIFMMQKAEQKYYgEAJgEwxAIESAJliAAIlADLFAARKAGSKAQiUkAoyZzSfoa2vBH0FgCyuBEBWUkINkIgxgKwkgKwkgKwkgKwkBUFebzZPPk13mzf8j7Vz5mJj2AvlQPK/OZF/OZQrF5u8kB9Nqy8Hkkf+LV+uAn7+JSvk/dt3hv9TFmTuGXn/9re8h9bvL9tDq7aCkiBvnv1k+ve4UC5OM58jb56/M8zKkiCb3t+7Z8nNiy+5L3Z4tOfJsiDN5/pFwi8ZN5vTnCXwFA45/CpRrmSekXwn3P+j7JcffD7kPkdmhzTvhIIgEVsAWUkAWUkAWUkAWUkAWUkAWUkAWUkA2TT//Vfz9YfXuauIDCArQOQBJCBJ5+tjxtjR3dlRu3x+8OH2mD349ccP+//741/YwYeuD//vUYv59Ydf26WTphn1LSSVQt4enwjA84efm1bz9viofehAQj4+lH34jOSQj9u+wnzYt5BUCvm/z404Zm6RrrjLeR/yROkjHtP0LSSVQjbNVXvYfPCaH1vbWcknZns8lZDdabHrs4Pkj7X/GfctJJVC3h4/EDrN1cP/dJYq5K4PIAnnimtctVC3v+fXLeJweXUwhNz1GUGO+xaSWiH5ZHvc/qd5z8R1zehiR0Bu+/CLnh4kLnZI5X179vsbvyy94q8oxEuKv44g931a6x7kuG8hqRVSE3EonaEvjawDkh9F784Ok/cllHVANuftC43D7u0e8ZJjum9pWQlk/QFkJQFkJQFkJQFkJQFkJfk/PEfdTF+9BQUAAAAASUVORK5CYII=" /><!-- --></p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcgAAAGACAMAAAAedALZAAAAw1BMVEUAAAAAADoAAGYAOpAAZrYzMzM6AAA6ADo6AGY6kNtA4NBNTU1NTW5NTY5NbqtNjshmAABmADpmtv9uTU1uTW5uTY5ubo5ubqtuq+SOTU2OTW6OTY6Obk2OyP+QOgCQkDqQkGaQtpCQ27aQ2/+rbk2rbm6rbo6ryKur5OSr5P+2ZgC22/+2///Ijk3I///bkDrb/7bb/9vb///kq27k///r6+v/tmb/yI7/25D/27b/29v/5Kv//7b//8j//9v//+T///9qLPcdAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAPo0lEQVR4nO2dDXvbthWFbxwnreO09ZxudbY5XRenW7Ik2vJhZ7MT6///qhESJZIQQeLjAhcAz3meRqh8D3F5XwEkJUqgNVSFSDoBiEcknQDEI5JOAOIRSScA8YikE4B4RNIJQDwiX+PngbT/dVSYe9l2gKzEDpCV2AGyEjtAVmIHyErsAFmJHSArsQNkJXaArMQOkJXYAbISO0BWYgfISuwAWYl9USCpr+S9x7UvC+STTgAJkJ69x7UDZLLe49oBMlnvce0Amaz3uHaATNZ7XDtAJus9rh0gk/Ue1w6QyXqPawfIZL3HtQNkst7j2gEyWe9x7VYgb//4fvP49fnpj5/2DwCZk90G5M3pDxuQ91eX648/7R4AMiu7Bch3T/+xHZFf//JeDc72ASCzsrtMrbe/fFp//fPr9qF54lGjKV9uGoCUTiaSaOqPLcibHzcE24f2b5yvK4xIf7sLyIMRCZD52F1A4hgZ1HtcuwvI+6uL7VnrBc5aPXqPa7cGqf7DdWRI73HtViCnxJkOQPrbATJZ73HtAJms97h2gEzWe1w7QCbrPa4dIJP1HtcOkMl6j2sHyGS9x7UDZLLe49oBMlnvce0Amaz3uHaATNZ7XDtAJus9rh0gk/Ue1w6QyXqPawfIZL3HtQNkst7j2gEyWe9x7QCp2ad/iyek97h2gNTs0zEhvce1A6RmB0iGdADS3w6Qmh0gGdIBSH87QGp2gGRIByD97QCp2QGSIR2A9LcDpGYHSIZ0ANLfHgyyJNn8hkDpvzNAvkbO1xVGpL8dIDU7QDKkA5D+doDU7ADJkA5A+tsBUrMDJEM6AOlvB0jNDpAM6QCkvx0gNTtAMqQDkP52gNTsAMmQDkD62wFSswMkQzoA6W8HSM0OkAzpAKS/HSA1O0AypAOQ/naA1OwAyZAOQPrbAVKzAyRDOgDpbwdIzQ6QDOkApL8dIDU7QDKkA5D+doDU7ADJkA5A+tsBUrMDJEM6AOlvB0jNXjHI/XKRH0+VLjePP9S6omu9IO+vLnsLuKqVst9dYkR69B7XPg9ysKSyWiT7/tXr3p850wFIf/s8yMEi52poNlOtmmAbPWpk9GWoZf+GgJpMdyA3j7c/90cl5+sKI9LfPg+yPyJv9otk74+TnOkApL99HmT/GPnuYvcsQDr3Htc+D/L+6mJ31rqdUNWwvP8dlx+uvce1z4NsryPVoGxn2OY68un+xJUzHYD0t1uAnBZnOgDpbwdIzQ6QDOkApL8dIDU7QDKkA5D+doDU7ADJkE6MWgzWunIF6bJOFkByuQ0g+2BcQbqMToDkcgMkQPbsAMmQDkD62wFSswMkQzoA6W8HSM0OkAzpAKS/HSA1O0AypAOQ/naAbMMIIPnSEQBJ3eN6+wiQ4emIgKSBHSA50kkLUkeDqZUtnaQgDz6Y6oPcDkyA9M0myM151rr97BIgfbMJcrNefmBEBmUT5MZ15PJAEkBWApIs79kBSL9sbILMd0Rhai0LpLG6ABkCMrkcvxt+AIamrUaQfHsQVeRr5HxdJRmR7YHPekQa432Sj2dfHkjXqZVM8T7Jx7MDpGZf7DGSMx2A9LcvC+TkdWF9IO/OHrysFCRNgJkAOfoGgk/y8ezjI/IN0cMPFYKcHGFTIMsckdtRSXQCkGVPrR3Ko7cAWTjIFdFxM8XOT7Cc6UQFSQsE+e0F0blqXM8PSc50YoJUJzpLA3l3ZjGllgYyeGqd+/J5liBth+OiQHIkH88OkJq9nql1tf/U9tiCI0A6JR/PPjEi7cSZDkD628dAOokznWggyQZMZSCb4ajeClBKc4x0+lWiz54gaRKM8UeVtPjuGz8jGecGMvmIdHrZT8Z7T63GGB3kYTxA7lUQyJH4vEFup1e7dwWC0wFIFvsoyDfH69XR21Wayw+AZLGPgWwG5LcXx6neEIgOsvdhcjjIzdlNQSDvzk7qAdn/AGRRIL+9OLl+8FJNsFWAnAQzHTMfnzXI9ZfHdGzzWSRAZg7SRcHpACSLvXKQ0+/UjG6yJpDN1JrwLTqA5LCPgVTXHpWMyChT6/h9zhmCTPsxFkCy2MdHJEDaxmcNUnsrYL98/W7d+u4JgMwa5PDzyN7y9dtlXIfr2QenEw8kHYQvDORQ3dK87QrZg/XsMwZJ+ttpCwfZLZbdrlvfPcGyfP2gWvzxRjA2McZ4Gns6C9Hg/1ZE56v2Lbpu+fp23fr+evY5j8iR8PkRZjki9yeueY/INw//vf0kS6m/fP1aHSeHTwSnYwPSbqUyN5A29+nMg88a5OZjrPPduevwkNiAFDhG2lTXFaRre3ybBYHslq9v163vrWcPkFmDXK/U1Ko+W96oW76+Xbc+/XWkO0iatS4B5PpaHTisvrCcLUiasy4CpIOC0yl1am1/LTtk12eTd7ADZK0gd+/PZfV5ZI4g9adzA6m0UggtP8wKTocfJFlZFwAy7RddI4B0ftcGILMEaWddAMjd1JrmB5MKBjn4ZbMcQW6vI+1uEwhOp2CQg5/6yBKkg4LTYQV5+FXZuCBzH5EFg9Q3sehjZLkgHawACZAAOSY2kASQlYAcdccGue8VILlAykyt++cBsl8tw2/uzFV3GxwX5Pg9Pq6/EmRUZSDnh4AYyPG2zXxipaWD7A8DgARIgJQDSQelkwK5O2YCpBvI3S8EUjYgRzJ21nJBHpYOU2spIIkmSweQAAmQiUBalQ4gATIUJB2eQztqISAtYmRBHmbjqNpBbi/4swc5ko2j6gdJszGTnQNkKhmr5RjjuvkIIOMUyE3kawx+XZkqVNQxciQbR4mPyOB0agGJzyMtIBUBEiOyDpCYWg8qRADpbpcBOf0jN/p3gSdoDG6YyRUkmeRROZOkQNpUyy0+B5CG0x2r+aQykDS+mwA5J4AMbFtNrabNeFTOpNxAGnYTIOcEkIFtgJyvlls8QOYCcnNXnGE3CwI5csIDkPOlGITnAdIhBY/KmZQRyKndLAikSwoelTMJIAPbADlfLbd4gMwBJM3sJkDOKReQNL2bhYHUzlwXBHJuN0sDaZmCR+VMAsjANqbW+Wq5xQMkQAIkQJrB9E54lgLSoiwlgrRIwaNyJuUA0mI3HUE6r3vl38bUOl8tt/gBSH8wAOmUzkJAtsfJBYCkqWqNxE9VNEuQNJmOR+VMkgVJB59BGnazUJCfFzMiJ6vlFp8lyJl0PCpnkg3IbpXB22dqjeXdKvYAOZGx1d56VM4kC5DdavVqPV61zvJ2FXuAnMq4l7v5CsijciZZgOxW4r1RON9dtqvYA+RUxr3ccxmRw7Wxm1a7iv06YPn6/tmqcTe1+LmKuoVHATmxty7xQTJvdLBavVpfuV3Fvv2z9sKwe/1sQNLIrvXbWvxcRXMdkdkcI/sj8uvzi/bZ/XFS255dt0uaWlU63WEyi2Nkc9a6P80ByOmMh3tL8/Epzlp3q9W3HNtV7AFyKmOrvfWonEkWILvl69X1ozrNaVexB8iJjK321qNyJtmAnJa2PbtujZ9BGnazBpDtF+pN8aWCNBw1DLtZA8gnVYK0qZZbfP4gp+MBsgsHSID0bgPkfLXc4jMDabxtiMbjSwRJE28jm8piUdHMQNpsxrVyEwLIwPaSQXrsJkDOCSAD214Z7xaF8qicSQAZ2PYDeRgPkL3wYkCOxANkLxwgE4Ikr92sECRR0SDn7r32LUuBIAsfkQ6VdosvDeQTgDRUFCABUgrk7Erf9gLIwHYYSPfKmQSQge1FTq1d4gCpx5cFcp85QO7jd0UpCaTHbtrHFwvSrXImAWRge5FTq/9uAuSccgbp9mM5CX9bxwjSNYV9OUoCOXj5xa5ounbQZvbloJJAOk88CSsq1K1d5TIDOaSaWUWFugVI7ooKdZsVSC/lVlGhbgclYSLgvRmMSP/2oHKBi6YnAXmQYm4VFep2CDKEYyqQepK5VVSo2/nKZQbyQLlVVKhbgOSuqFC3h5XzPlACpGS3IyA9OSYAOZpabhUV6na6crmBHCOZW0WFuh2vnNf0Gh/kqHKrqFC3JpAeJAFSsltD5TAiBdrLOEYaX1q5VVSo23JAmkjmVlGhbqdAOh4o44I0KreKCnU7CdKJYxSQ/TtXAHKq3a/IaNVo+PxEYaOA7DIGyMm2qSJ9vPPWuCAJIOfbsyAHz8uANPQHkP22Hci5JeEBUrxbgBxp1wtyZ0wPsrc4AkBOtZ1AEkDGbCcDiak1bhsgeUrBvhmABEiAZGkDJEACJEACJFMp2DcDkAAJkCxtgATIpYDcrh/Za3VPAGRBIO+vLtsVXdtW9wRAlgSyW2O5bfUWXQbIgkB2q563re6JR40ODab7hSBGGXGZ/6LWxt5ya1vdE+Mj0l9h7mXbg0YkQOZjnwfpfIwMyCbIvWz7PMj7q4v9WevF9qz1YvKsNSCbIPey7fMg28tGNQbtriMDsglyL9tuAXJanOmUXUpZO0BWYgfISuwAWYkdICuxA2QldoCsxA6QldgBshJ7MMihRj7VSifRznPpnZi3J6FMSinbOzFvT0KZlFK2dxJMAmIUSScA8YikE4B4RNIJQDwi6QQgHhHDNm6fnZ5eMmzHSzenpz+8nw+LJnXbtpQ+nnY7T+GbU3fW3f78ej4whtSdKN2NRAL6KPcaXr/rdU3hm7v5SdtmanW39gn0/ae/iu35/ave6CGebXb3uwpIcETev/qn3NT69flpd0wjlk2qOyWldPvsqdyL6OOF4DFSHc/2o5I4tvj1uRzHteR0cPvLJ8mTHaXdMY0YtnX7THZf5A7Q6rTx9FT0VcwIUpTj8JtFAhIckWrf73/nu/zYviwFB4XgMVL8OnK/7ySWBcQqkk4A4hFJJwDxiKQTgHhE0glAPCLpBCAekXQCEI9IOgGIRySdQCb677/WX757KZ1FgEg6gTxUNkQlkk4gDwFkzvrymIhOvr04adqro7d3Z/Tgt+/f7v/6/a909HYbo/49aWB++e63pnW+XmuxBYikE4inu7PzDcDVww/rhubd2Unz1FEH8vFxF6NGpAL5uIndMB/GFiCSTiCe/vdhvZkzW0jXisuqD/L8IGbz3EhsASLpBGLqupk2H7xUc2szKtXAbObTDuT2sLiN2YFUzzX/6LEFiKQTiKe7swcbOuvrh//ZsjwEuYsByIx1rWhcN6Du/qDOWzbT5fXREOQuRgOpxxYgkk4gnhTDL4+bf9ZvaHNeo53sbEC2MeqkpwcSJztZ6U1z9Pu7Oi29VlcUm0uKv2kg9zEN6x5IPbYAkXQCabWZSiPEyoukE0gmNYt+e3HMHpuJSDqBdFo1FxrH27d7Npcc87EliaQTgHhE0glAPCLpBCAekXQCEI9IOgGIRySdAMSj/wOni9xuqyJwJAAAAABJRU5ErkJggg==" /><!-- --></p>
+<p>The gamma distribution looks mostly accurate to the original data’s
+distribution. It’s a little more left-heavy, but that may be due to the
+original data having a small sample size. This may also explain why the
+real data is not as unimodal as the simulations.</p>
 </div>
 
 
