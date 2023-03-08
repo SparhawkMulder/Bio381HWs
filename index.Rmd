@@ -20,4 +20,4 @@ Hi George.
 
 ## [Week 5 Hw](Homework5.html)
 
-## [Week 6 Hw](Homework6.htlm)
+## [Week 6 Hw](Homework6.html)
