@@ -1,0 +1,268 @@
+---
+title: "Homework 9"
+author: "Sparhawk"
+date: "2023-03-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# HW 9: Structured Programming
+
+## Revised, Structured Data Analysis
+
+### Program Body:
+```{r}
+
+# Load packages ---------------------------------------
+
+library(tidyverse)
+library(dplyr)
+library(MASS)
+library(ggplot2)
+
+
+# Source Functions ------------------------------------
+
+
+source("HW9Functions/Functions_fun.R")
+message("Functions sourced, captain!")
+
+# Global Variables -----------------------------------
+
+FullData <- "CleanedData.csv"
+
+
+# Program Body ---------------------------------------
+
+# Get Data
+Data <- getData(FullData)
+
+# Clean and Format Data
+Clean <- cleanData(Data)
+
+Men <- makeMen(Clean)
+Women <- makeWomen(Clean)
+
+# Get Parameters (normal)
+MenPars <- getParams(Men$avg_rating)
+WomenPars <- getParams(Women$avg_rating)
+
+# Create a random similar normal distribution
+randMen <- make.similiar.normal(MenPars)
+randWomen <- make.similiar.normal(WomenPars)
+
+# t-test the two groups
+# I decided this could just be its own line
+ttest <- t.test(randMen$randData, y = randWomen$randData, alternative="two.sided")
+print(ttest)
+
+# Create Overlayed Histograms
+comparisonHist(randWomen,randMen,"ComparisonHist.png")
+```
+
+### Source Functions
+
+I've put them all on one R file for convenience
+
+```{r}
+# Load packages -------------------------------------------------
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+
+
+# FUNCTION: getData ############################################
+# packages: none
+# purpose: read a CSV
+# input: CSV file address
+# output: a dataframe
+# 
+getData <- function(filename = NULL) {
+  if (is.null(filename)) {
+    return("No CSV file input") # warning message
+    
+  } else {
+    
+    df <- read.csv("CleanedData.csv", sep=",")
+    return(df)
+  }
+}
+
+
+# FUNCTION: cleanData ############################################
+# packages: tidyverse
+# purpose: clean up this specific dataset to the minimum columns
+# input: a dataframe
+# output: a smaller dataframe
+# 
+cleanData <- function(df=NULL) {
+  if (is.null(df)) {
+    message("no dataframe input!")
+    return(NULL) # warning message
+  }
+  
+  df <- dplyr::select(df, photo, avg_rating, photo_gender) #select desired columns
+  df <- unique(df) # we only want one instance of each photo
+  df <- arrange(df, photo) # arrange in photo ID order
+  
+  message("trimmed to only photos, rating, and gender")
+  return(df)
+}
+
+
+# FUNCTION: MakeMen ############################################
+# packages: dplyr
+# purpose: split the dataframe into two, by sex
+# input: a dataframe
+# output: a smaller dataframe
+# 
+makeMen <- function(df=NULL) {
+  Men <- filter(df, photo_gender=="Male")
+  
+  return(Men)
+}
+
+
+# FUNCTION: MakeWomen ############################################
+# packages: dplyr
+# purpose: split the dataframe into two, by sex
+# input: a dataframe
+# output: a smaller dataframe
+# 
+makeWomen <- function(df=NULL) {
+  Women <- filter(df, photo_gender=="Female")
+  
+  return(Women)
+}
+
+
+
+# FUNCTION: getParams ############################################
+# packages: none
+# purpose: get the parameters of a normal model for the dataset
+# input: 
+# output: 
+# 
+getParams <- function(column=NULL) {
+  if (is.vector(column) == FALSE) { # error message if column vectorisn't input
+    message("please input df$column")
+  }
+  params <- fitdistr(column,"normal")
+  
+  message("Hint: for Mean, use [name]$estimate['mean']")
+  message("Hint: for SD, use [name]$estimate['sd']")
+  
+  return(params)
+}
+
+
+# FUNCTION: make.similiar.normal ############################################
+# packages: tidyverse
+# purpose: create a random normal distribution with input parameters
+# input: parameters for a normal model
+# output: a dataframe
+# 
+make.similiar.normal <- function(params=NULL,size=100) {
+  
+  randData <- rnorm(size, mean=params$estimate["mean"], sd=params$estimate["sd"]) #make data
+  
+  newdf <- data.frame(randData) %>% #make df
+
+  return(newdf)
+}
+
+
+# FUNCTION: comparisonHist ##################################################
+# packages: ggplot2
+# purpose: 
+# input: 
+# output: 
+# 
+comparisonHist <- function(pinkdata=rnorm(100), bluedata=rnorm(100), outputName=NULL) {
+  
+  ComparisonHist <- ggplot(data=pinkdata, aes(x=randData)) + #could add x-axis name
+    geom_histogram(fill="pink", color="black", alpha=0.60) +
+    
+    geom_histogram(data=bluedata,
+                   fill="lightblue", color="black", alpha=0.5) +
+  
+  if(is.null(outputName)) {message("Hint: input a .png file name")}
+  save(ComparisonHist, file=outputName)
+  message("histogram saved!")
+  
+  return(ComparisonHist)
+}
+```
+
+
+
+## Added Modifications
+
+I've decided to add a new column, weight, and analyze that.
+```{r}
+# Alternate ---------------------------------------------------------------------
+# Include weight
+# do analysis on weigh instead of attractiveness
+# t-test weights by sex
+# histogram for weights
+
+# Load extra functions
+
+source("HW9Functions/Function2_fun.R")
+
+# Include weight data
+wClean <- cleanData_weight(Data)
+
+# Then this is all the same, but for weight
+
+wMen <- makeMen(wClean)
+wWomen <- makeWomen(wClean)
+# Get Parameters (normal)
+wMenPars <- getParams(wMen$X_weight)
+wWomenPars <- getParams(wWomen$X_weight)
+# Create a random similar normal distribution
+wrandMen <- make.similiar.normal(wMenPars)
+wrandWomen <- make.similiar.normal(wWomenPars)
+
+# t-test for weight by sex
+wieght_ttest <- t.test(wrandMen$randData, y = wrandWomen$randData, alternative="two.sided")
+print(ttest)
+
+# comparison hist for weights
+weights_hist <- comparisonHist(wrandWomen,wrandMen,"ComparisonHist_weight.png")
+print(weights_hist)
+```
+
+And the modified cleaning function is this:
+```{r}
+# Alternate Source functions page
+# Sparhawk Mulder
+# 3/29/2023
+
+# FUNCTION: cleanData_weight ############################################
+# packages: tidyverse
+# purpose: clean up this specific dataset to the minimum columns + weight
+# input: a dataframe
+# output: a smaller dataframe
+# 
+cleanData_weight <- function(df=NULL) {
+  if (is.null(df)) {
+    message("no dataframe input!")
+    return(NULL) # warning message
+  }
+  
+  df <- dplyr::select(df, photo, avg_rating, photo_gender, X_weight) #select desired columns
+  df <- unique(df) # we only want one instance of each photo
+  df <- arrange(df, photo) # arrange in photo ID order
+  
+  message("trimmed to only photos, rating, weight, and gender")
+  return(df)
+}
+```
+
+Et Voila!
