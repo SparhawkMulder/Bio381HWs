@@ -1,0 +1,153 @@
+---
+title: "Homework 10"
+author: "Sparhawk"
+date: "2023-04-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework 10
+
+
+
+
+## Question the First
+
+"Using a for loop, write a function to calculate the number of zeroes in a numeric vector. Before entering the loop, set up a counter variable counter <- 0. Inside the loop, add 1 to counter each time you have a zero in the vector. Finally, use return(counter) for the output."
+
+```{r}
+zeroCount <- function(x=runif(10)) {
+  count <- 0
+  for (i in seq_along(x)) {
+    if (x[i]==0) {
+      count <- count + 1
+    }
+  }
+  return(count)
+}
+
+# testing
+x <- c(0,0,0,7,4,40,200) # 5 zeros
+print(zeroCount(x))
+```
+
+## Question the Second
+
+"Ok now code that with subsetting to be one line, like a boss"
+
+```{r}
+# FUNCTION: zeroCount2 #########################
+# packages: none
+# purpose: count the number of zeroes in a vector
+# input: a numeric vector
+# output: a single integer
+# 
+zeroCount2 <- function(x=runif(10)) {
+  count <- length(x[x %% 10 == 0])
+  return(count)
+}
+
+# testing
+print(zeroCount2(x))
+
+```
+Technically this one only counts numbers like 200 as having one zero, and numbers like 3053 as having none. I could make more complex code to do that, but it would be more than one line (or a VERY long one). The point is; voila, subsetting!
+
+
+## Question the Third!
+
+"Write a function that takes as input two integers representing the number of rows and columns in a matrix. The output is a matrix of these dimensions in which each element is the product of the row number x the column number."
+
+```{r}
+# FUNCTION: productMatrix #########################
+# packages: none
+# purpose: create a matrix of the products of the row and column numbers
+# input: the row and column lengths of a matrix
+# output: a matrix
+# 
+productMatrix <- function(rows=5, columns=4) {
+  m <- matrix(data = NA,nrow=rows,ncol=columns)
+  for (i in 1:rows) {
+    for (j in 1:columns) {
+      m[i,j] <- i*j # these would be a vector[i]*vector[j] if the inputs were vectors
+    } 
+  } 
+  return(m)
+}
+# test
+print(productMatrix())
+```
+
+## Question the Fourfvth!
+
+### a. Make a data frame with 3 groups of data with different means
+
+```{r}
+groups <- c(rep("Control",100),rep("Treatment1",100),rep("Treatment2",100))
+data <- c(rnorm(100,mean = 7, sd = 3),
+          rnorm(100,mean = 10, sd = 2),
+          rnorm(100,mean = 20, sd = 4))
+John <- data.frame(groups,data)
+
+head(John)
+```
+
+
+### b. Reshuffle the response varaible and calculate the means of each group (in one function)
+
+```{r}
+# FUNCTION: shuffle_and_means #########################
+# packages: none
+# purpose:  
+# input: 
+# output: 
+# 
+shuffle_and_means <- function(df=NULL) {
+  if(is.null(df)) {stop("gimme a data frame or fugeddaboutit") }
+  
+  df[,2] <- sample(df[,2])
+  
+  means <- c(mean(df$data[1:100]),mean(df$data[101:200]),mean(df$data[201:300]))
+  # wish I remembered how to select by another column's values
+  
+  return(means)
+}
+# test
+print(shuffle_and_means(John))
+```
+
+
+### c. use a for loop to repeat shuffle_and_means 100 times in a data frame.
+
+```{r}
+# Data frame for means storage
+meanDF <- matrix(data = NA, nrow = 100, ncol = 4, )
+meanDF <- data.frame(meanDF)
+
+library(tidyverse)
+meanDF <- rename(meanDF,replication=X1, ControlAvg=X2, Treat1Avg=X3, Treat2Avg=X4)
+
+# for loop:
+for (i in 1:100) {
+  meanDF[i,] <- c(i,shuffle_and_means(John))
+}
+head(meanDF)
+```
+
+### d. make a histogram of the reshuffled group means
+
+```{r}
+# simple plot
+qplot(meanDF$ControlAvg) 
+
+# overlayed histograms
+ggplot(meanDF,mapping=aes(x=ControlAvg)) + # this changes the x-axis labels...
+  geom_histogram(fill="black", color="black",alpha=0.2) +
+  geom_histogram(aes(x=Treat1Avg), fill="blue",color="black",alpha=0.4) +
+  geom_histogram(aes(x=Treat2Avg), fill="red",color="black",alpha=0.4)
+# I'm sure I could spend another 15 minutes looking up how to set up a legend and correct axis labels...
+# but you see the gist! Data: graphed.
+```
