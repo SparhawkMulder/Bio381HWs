@@ -1,0 +1,211 @@
+---
+title: "Homework11"
+author: "Sparhawk"
+date: "2023-04-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework 11: Batch Processing
+
+## Part 0: Creating a group of dataframes
+
+I don't have multiple data sets for any of my own projects, and none are big enough to split.
+
+I can, however, make a normal model off of one I have, and then create randomized datasets from there.
+
+I've modified the FileBuilder function from the Batch Processing lecture to create normal model data based on parameters. I also changed the x variable to an ID variable to match my data.
+
+First, the function builder:
+```{r}
+# Libraries: ------------------------------------
+library(readr)
+library(tidyverse)
+library(dplyr)
+library(MASS)
+# -----------------------------------------------
+
+# FUNCTION: FileBuilder #########################
+# packages: 
+# purpose: create a random file following a given model
+# input: file_n = number of files to create
+#       : file_folder = name of folder for random files
+#       : file_size = c(min,max) number of rows in file
+#       : file_na = number on average of NA values per column
+#       : mean = mean
+#       : sd = sd
+# output: a set of random normal distribution files
+# 
+FileBuilder <- function(file_n=30,
+                        file_folder="HW11Datas/",
+                        file_size=c(15,100),
+                        file_na=3,
+                        mean=NULL,
+                        sd=NULL) {
+  
+  if(dir.exists(file_folder)) unlink(file_folder,
+                                     recursive = TRUE) # clean out directory
+  dir.create(file_folder) # make directory for the files
+  
+  for (i in seq_len(file_n)) {
+    file_length <- sample(file_size[1]:file_size[2],size=1) # get number of rows
+    photos <- seq(1:file_length) # create number of photos
+    rating <- rnorm(file_length,mean=mean, sd=sd) # create ratings
+    df <- data.frame(photos,rating) # bind into a data frame
+    
+    bad_vals <- rpois(n=1,lambda=file_na) # determine NA number
+    df[sample(nrow(df),size=bad_vals),2] <- NA # random NA in var_y
+    # still in for loop!
+    
+    # create label for file name with padded zeroes
+    file_label <- paste(file_folder,
+                        "ranFile",
+                        formatC(i, # creates leading zeroes, for ease of alphabetizing
+                                width=3,
+                                format="d",
+                                flag="0"),
+                        ".csv",sep="")
+    
+    # set up data file and incorporate time stamp and minimal metadata
+    write.table(cat("# Simulated random data file for batch processing","\n",
+                    "# timestamp: ",as.character(Sys.time()),"\n",
+                    "# Sparhawk Mulder","\n",
+                    "# ------------------------", "\n",
+                    "\n",
+                    file=file_label, #callback
+                    row.names="",
+                    col.names="",
+                    sep=""))
+    
+    # now add the data frame
+    write.table(x=df,
+                file=file_label,
+                sep=",",
+                row.names=FALSE,
+                append=TRUE) # df doesn't overwrite metadata)
+  }
+}
+```
+Next, taking a dataset, cleaning it, getting the model, and using our function:
+```{r}
+Full <- read.csv("CleanedData.csv")
+
+Small <- dplyr::select(Full, photo, avg_rating) %>%
+  arrange(photo) %>%
+  unique()
+
+# Kowalski, analysis
+Pars <- fitdistr(Small$avg_rating,"normal")
+ParsMean <- Pars$estimate["mean"]
+ParsSD <- Pars$estimate["sd"]
+
+# UNLEASE THE HORDE
+RanFileLength <- c(75,100) # bounds of dataset lengths
+Files_n <- 7 # number of files
+
+FileBuilder(file_n=Files_n,
+            file_folder="HW11Datas/",
+            mean=ParsMean,
+            sd=ParsSD,
+            file_size = RanFileLength)
+# prepare for a bunch of unimportant warnings
+```
+
+## Part 1. Let's get down to business
+
+to defeat
+
+the huns.
+
+
+### Getting summary stats:
+```{r}
+# Setup vars -----------------------
+FileFolder <- "HW11Datas/"
+FileNames <- list.files(path=FileFolder,
+                        pattern=".csv")
+Mean <- rep(NA,times=length(FileNames))
+SD <- rep(NA,times=length(FileNames))
+
+
+Stats <- data.frame(FileNames,Mean,SD)
+
+# Loop -----------------------------
+for (i in 1:Files_n) {
+  data <- read.table(file=paste(FileFolder,FileNames[i],sep=""),
+                     sep=",",
+                     header=TRUE)
+  data <- data[complete.cases(data),]
+  . <- fitdistr(data[,2], "Normal")
+  Stats[i,2] <- .$estimate["mean"]
+  Stats[i,3] <- .$estimate["sd"]
+}
+
+head(Stats)
+```
+
+
+### Making the summary file
+```{r}
+file_out <- "HW11SummaryStats.csv"
+
+write.table(cat("# Summary stats for ",
+                "batch processing of rating data","\n",
+                "# timestamp: ",as.character(Sys.time()),"\n",
+                "# Sparhawk Mulder","\n",
+                "# ------------------------", "\n",
+                "\n",
+                file=file_out,
+                row.names="",
+                col.names="",
+                sep=""))
+# now add the data frame
+write.table(x=Stats,
+            file=file_out,
+            row.names=FALSE,
+            col.names=TRUE,
+            sep=",",
+            append=TRUE)
+```
+
+### Making Histograms
+```{r}
+par(mfrow=c(2,4))
+
+for (i in seq_along(FileNames)) {
+  data <- read.table(file=paste(FileFolder,FileNames[i],sep=""),
+                     sep=",",
+                     header=TRUE)
+  hist(data$rating)
+}
+```
+I could use ggplot to make more consistent, prettier histograms, if desired.
+
+
+### Combining them into one giant megazord
+
+I'd be more likely to literally just copy paste in Excel, but I'm gald I figured out this option
+```{r}
+
+ID <- c()
+avg_rating <- c()
+
+for (i in 1:Files_n) {
+  data <- read.table(file=paste(FileFolder,FileNames[i],sep=""),
+                     sep=",",
+                     header=TRUE) # read in next data file
+  # data <- data[complete.cases(data$rating)] # If you want cleaned data
+  ID <- c(ID,data$photo)
+  avg_rating <- c(avg_rating,data$rating)
+}
+
+
+Megazord <- data.frame(ID,avg_rating)
+
+# Megazord Histogram
+
+hist(Megazord$avg_rating) # I'm not focused on making this pretty, just showing I can
+```
