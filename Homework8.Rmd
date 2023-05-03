@@ -82,10 +82,15 @@ print(ttest)
 
 # ggplot histogram
 
-Comparison <- ggplot(data=WomenRandAttr, aes(x=Attractiveness)) +
+ComparisonHist <- ggplot(data=WomenRandAttr, aes(x=Attractiveness)) +
   geom_histogram(fill="pink", color="black", alpha=0.60) +
   geom_histogram(data=MenRandAttr,
                   fill="lightblue", color="black", alpha=0.5)
+
+ComparisonSmooth <- ggplot(data=WomenRandAttr, aes(x=Attractiveness)) +
+  geom_density(fill="pink", color="black", alpha=0.60) +
+  geom_density(data=MenRandAttr,
+                 fill="lightblue", color="black", alpha=0.5)
 
 print(ComparisonHist)
 save(ComparisonHist,file="Comparison1.png")
