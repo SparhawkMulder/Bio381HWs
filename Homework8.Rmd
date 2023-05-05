@@ -66,7 +66,7 @@ WomenRandAttr <- data.frame(WomenRandAttr) %>%
 
 ### 4. Analyze the random data. Generate a useful graph.
 
-```
+```{r}
 ttest <- t.test(MenRandAttr[,1], y = WomenRandAttr[1], alternative="two.sided")
 
 print(ttest)
@@ -98,6 +98,7 @@ save(ComparisonHist,file="Comparison1.png")
 print(ComparisonSmooth)
 save(ComparisonSmooth,file="Comparison2.png")
 ```
+
 ```{r, echo=FALSE}
 knitr::include_graphics("Comparison1.png")
 ```
